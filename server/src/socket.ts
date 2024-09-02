@@ -1,0 +1,45 @@
+import { Server, Socket } from 'socket.io';
+import logger from './util/logger';
+import { v4 } from 'uuid';
+
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+}
+
+const EVENTS = {
+  connection: 'connection',
+  CLIENT: {
+    ADD_TASK: 'ADD_TASK',
+    DELETE_TASK: 'DELETE_TASK',
+  },
+  SERVER: {
+    ADD_TASK: 'ADD_TASK',
+    DELETE_TASK: 'DELETE_TASK',
+  },
+};
+
+const tasks: Task[] = [];
+
+function socketServerHandler({ socketServer }: { socketServer: Server }) {
+  logger.info(`socket enabled`);
+
+  socketServer.on(EVENTS.connection, (socket: Socket) => {
+    logger.info(`user connected with id: ${socket.id}`);
+
+    socket.on(EVENTS.CLIENT.ADD_TASK, (newTask: Task) => {
+      tasks.push(newTask);
+      socket.emit(EVENTS.SERVER.ADD_TASK, tasks);
+      logger.info(`new task added`);
+    });
+
+    socket.on(EVENTS.CLIENT.DELETE_TASK, (id: number) => {
+      tasks.filter((task) => task.id !== id);
+      socket.emit(EVENTS.SERVER.DELETE_TASK, tasks);
+      logger.info(`task erased`);
+    });
+  });
+}
+
+export default socketServerHandler;
