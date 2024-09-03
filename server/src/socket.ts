@@ -3,7 +3,7 @@ import logger from './util/logger';
 import { v4 } from 'uuid';
 
 interface Task {
-  id: number;
+  id: string;
   title: string;
   description: string;
 }
@@ -20,7 +20,7 @@ const EVENTS = {
   },
 };
 
-const tasks: Task[] = [];
+let tasks: Task[] = [];
 
 function socketServerHandler({ socketServer }: { socketServer: Server }) {
   logger.info(`socket enabled`);
@@ -28,15 +28,17 @@ function socketServerHandler({ socketServer }: { socketServer: Server }) {
   socketServer.on(EVENTS.connection, (socket: Socket) => {
     logger.info(`user connected with id: ${socket.id}`);
 
+    socket.emit(EVENTS.SERVER.ADD_TASK, tasks);
+
     socket.on(EVENTS.CLIENT.ADD_TASK, (newTask: Task) => {
       tasks.push(newTask);
-      socket.emit(EVENTS.SERVER.ADD_TASK, tasks);
+      socketServer.emit(EVENTS.SERVER.ADD_TASK, tasks);
       logger.info(`new task added`);
     });
 
-    socket.on(EVENTS.CLIENT.DELETE_TASK, (id: number) => {
-      tasks.filter((task) => task.id !== id);
-      socket.emit(EVENTS.SERVER.DELETE_TASK, tasks);
+    socket.on(EVENTS.CLIENT.DELETE_TASK, (id: string) => {
+      tasks = tasks.filter((task) => task.id !== id);
+      socketServer.emit(EVENTS.SERVER.DELETE_TASK, tasks);
       logger.info(`task erased`);
     });
   });

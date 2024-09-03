@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { v4 } from 'uuid';
 import { EVENTS } from '../config/event';
 import { socket } from '../config/default'
@@ -17,16 +17,6 @@ interface TaskManagerProps {
 const TaskManager: React.FC<TaskManagerProps> = ({ tasks, setTasks }) => {
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
-
-  useEffect(() => {
-    socket.on(EVENTS.SERVER.ADD_TASK, (newTasks: Task[]) => {
-      setTasks(newTasks);
-    });
-
-    return () => {
-      socket.off(EVENTS.SERVER.ADD_TASK);
-    };
-  }, [setTasks]);
 
   const addTask = () => {
     if (title && description) {
